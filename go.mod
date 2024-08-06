@@ -1,4 +1,4 @@
-module top40-archives
+module top40Archives
 
 go 1.22.5
 
