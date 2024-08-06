@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/csv"
+	"flag"
 	"fmt"
 	"html"
 	"io"
@@ -9,13 +10,26 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-    "strings"
+	"strings"
 	"time"
+
 	"github.com/gocolly/colly/v2"
 )
 
 func main() {
-    c := colly.NewCollector()
+
+	currentDate := time.Now()
+	lastMonthDate := currentDate.AddDate(0, -1, 0)
+	lastYear, lastMonth, _ := lastMonthDate.Date()
+
+	argsYear := flag.Int("year", lastYear, "year to scrape")
+	argsMonth := flag.Int("month", int(lastMonth), "month to scrape")
+	argsWeekOfMonth := flag.Int("week", 1, "week of month to scrape")
+
+	flag.Parse()
+	fmt.Printf("argsYear: %d, argsMonth: %d, argsWeek: %d\n", *argsYear, *argsMonth, *argsWeekOfMonth)
+
+	c := colly.NewCollector()
 
 	c.OnHTML("div.month", func(e *colly.HTMLElement) {
 		e.ForEach("a", func(_ int, a *colly.HTMLElement) {
@@ -75,9 +89,9 @@ func main() {
 		})
 	})
 
-    c.OnRequest(func(r *colly.Request) {
-        fmt.Println("Visiting", r.URL)
-    })
+	c.OnRequest(func(r *colly.Request) {
+		fmt.Println("Visiting", r.URL)
+	})
 
-    c.Visit("https://www.tvk-yokohama.com/top40/2022/archives.html")
+	c.Visit("https://www.tvk-yokohama.com/top40/2022/archives.html")
 }
