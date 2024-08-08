@@ -7,9 +7,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"net/url"
-	"path"
-	"strconv"
 	"strings"
 	"time"
 
@@ -29,27 +26,13 @@ func Archives(targetYear int, targetMonth int, targetWeekOfMonth int) {
 				end := strings.LastIndex(onClickAttr, "'")
 				apiURL := "https://www.tvk-yokohama.com/top40/2022/" + onClickAttr[start:end]
 
-				parsedURL, err := url.Parse(apiURL)
-				if err != nil {
-					log.Printf("Failed to parse URL %s: %v", apiURL, err)
-					return
-				}
-
-				var parsedYear, parsedDate int
-				segments := strings.Split(strings.Trim(parsedURL.Path, "/"), "/")
-				if len(segments) >= 2 {
-					parsedYear, _ = strconv.Atoi(segments[len(segments)-2])
-					dateWithExt := segments[len(segments)-1]
-					parsedDate, _ = strconv.Atoi(strings.TrimSuffix(dateWithExt, path.Ext(dateWithExt))[:2])
-				} else {
-					fmt.Println("Not enough segments in path:", parsedURL.Path)
-					return
-				}
+				parsedYear := ParseYear(apiURL)
+				parsedDate := ParseDateArchives(apiURL)
 
 				if parsedYear == targetYear && parsedDate == targetMonth && count == targetWeekOfMonth {
 					res, err := http.Get(apiURL)
 					if err != nil {
-						fmt.Println("Failed to make API request:", err)
+						log.Fatalln("Failed to make API request:", err)
 						return
 					}
 					defer res.Body.Close()
@@ -72,7 +55,7 @@ func Archives(targetYear int, targetMonth int, targetWeekOfMonth int) {
 							artistName := html.UnescapeString(fields[len(fields)-1])
 							fmt.Printf("%s / %s\n", artistName, title)
 						} else {
-							fmt.Println("Not enough fields")
+							log.Fatalln("Not enough fields")
 						}
 					}
 				}
