@@ -24,6 +24,23 @@ func ParseYear(targetUrl string) int {
 	return parsedYear
 }
 
+func ParseDateBackNumber(targetUrl string) int {
+	parsedURL, err := url.Parse(targetUrl)
+	if err != nil {
+		log.Printf("Failed to parse URL %s: %v", targetUrl, err)
+	}
+
+	var parsedDate int
+	segments := strings.Split(strings.Trim(parsedURL.Path, "/"), "/")
+	if len(segments) >= 2 {
+		dateWithExt := segments[len(segments)-1]
+		parsedDate, _ = strconv.Atoi(strings.TrimSuffix(dateWithExt, path.Ext(dateWithExt))[4:6])
+	} else {
+		log.Println("Not enough segments in path:", parsedURL.Path)
+	}
+	return parsedDate
+}
+
 func ParseDateArchives(targetUrl string) int {
 	parsedURL, err := url.Parse(targetUrl)
 	if err != nil {
