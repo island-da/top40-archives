@@ -45,7 +45,16 @@ func popUp(url string) {
 	c := colly.NewCollector()
 
 	c.OnHTML("table tbody tr", func(e *colly.HTMLElement) {
-		fmt.Println("h3 found:", e.Text)
+		var title, artist string
+		e.ForEach("td", func(i int, d *colly.HTMLElement) {
+			if i == 2 {
+				title = d.Text
+			}
+			if i == 3 {
+				artist = d.Text
+			}
+		})
+		fmt.Printf("%s / %s\n", artist, title)
 	})
 
 	c.OnRequest(func(r *colly.Request) {

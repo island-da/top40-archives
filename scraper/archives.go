@@ -58,8 +58,8 @@ func Archives(targetYear int, targetMonth int, targetWeekOfMonth int) {
 						fields := strings.Split(joinedRecord, ",")
 						if len(fields) >= 2 {
 							title := html.UnescapeString(fields[len(fields)-2])
-							artistName := html.UnescapeString(fields[len(fields)-1])
-							fmt.Printf("%s / %s\n", artistName, title)
+							artist := html.UnescapeString(fields[len(fields)-1])
+							fmt.Printf("%s / %s\n", artist, title)
 						} else {
 							log.Fatalln("Not enough fields")
 						}
