@@ -15,7 +15,7 @@ func BackNumber(targetYear int, targetMonth int, targetWeekOfMonth int) {
 			dataHtmlAttr := d.Attr("data-html")
 			urls = append(urls, "https://www.tvk-yokohama.com/top40/"+dataHtmlAttr)
 		})
-		match(urls, targetYear, targetMonth, targetWeekOfMonth)
+		matchBackNumber(urls, targetYear, targetMonth, targetWeekOfMonth)
 	})
 
 	c.OnRequest(func(r *colly.Request) {
@@ -25,7 +25,7 @@ func BackNumber(targetYear int, targetMonth int, targetWeekOfMonth int) {
 	c.Visit("https://www.tvk-yokohama.com/top40/backnumber.html")
 }
 
-func match(urls []string, targetYear int, targetMonth int, targetWeekOfMonth int) {
+func matchBackNumber(urls []string, targetYear int, targetMonth int, targetWeekOfMonth int) {
 	count := 1
 	for i := len(urls) - 1; i >= 0; i-- {
 		url := urls[i]
