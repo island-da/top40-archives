@@ -2,6 +2,7 @@ package scraper
 
 import (
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"html"
 	"io"
@@ -13,9 +14,10 @@ import (
 	"github.com/gocolly/colly"
 )
 
-func Archives(targetYear int, targetMonth int, targetWeekOfMonth int) {
+func Archives(targetYear int, targetMonth int, targetWeekOfMonth int) error {
 	c := colly.NewCollector()
 
+	founded := false
 	c.OnHTML("div.month", func(e *colly.HTMLElement) {
 		var urls []string
 		e.ForEach("a", func(_ int, a *colly.HTMLElement) {
@@ -27,7 +29,7 @@ func Archives(targetYear int, targetMonth int, targetWeekOfMonth int) {
 				urls = append(urls, url)
 			}
 		})
-		matchArchives(urls, targetYear, targetMonth, targetWeekOfMonth)
+		founded = founded || matchArchives(urls, targetYear, targetMonth, targetWeekOfMonth)
 	})
 
 	c.OnRequest(func(r *colly.Request) {
@@ -35,17 +37,25 @@ func Archives(targetYear int, targetMonth int, targetWeekOfMonth int) {
 	})
 
 	c.Visit("https://www.tvk-yokohama.com/top40/2022/archives.html")
+
+	if !founded {
+		return errors.New("archives not found")
+	}
+	return nil
 }
 
-func matchArchives(urls []string, targetYear int, targetMonth int, targetWeekOfMonth int) {
+func matchArchives(urls []string, targetYear int, targetMonth int, targetWeekOfMonth int) bool {
+	founded := false
 	for count, url := range urls {
 		parsedYear := ParseYear(url)
 		parsedDate := ParseDateArchives(url)
 		if parsedYear == targetYear && parsedDate == targetMonth && count+1 == targetWeekOfMonth {
+			founded = true
 			csvReader(url)
 			break
 		}
 	}
+	return founded
 }
 
 func csvReader(url string) {
