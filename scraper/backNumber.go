@@ -9,27 +9,28 @@ import (
 func BackNumber(targetYear int, targetMonth int, targetWeekOfMonth int) {
 	c := colly.NewCollector()
 
+	found := false
 	c.OnHTML("div.row", func(e *colly.HTMLElement) {
-		stop := false
-		e.ForEach("div.oa_list", func(_ int, d *colly.HTMLElement) {
-			if stop {
-				return
-			}
-
+		if found {
+			return
+		}
+		e.ForEachWithBreak("div.oa_list", func(_ int, d *colly.HTMLElement) bool {
 			dataHtmlAttr := d.Attr("data-html")
-			apiURL := "https://www.tvk-yokohama.com/top40/" + dataHtmlAttr
+			url := "https://www.tvk-yokohama.com/top40/" + dataHtmlAttr
 
-			parsedYear := ParseYear(apiURL)
-			parsedDate := ParseDateBackNumber(apiURL)
+			parsedYear := ParseYear(url)
+			parsedDate := ParseDateBackNumber(url)
 
 			count := 1
 			if parsedYear == targetYear && parsedDate == targetMonth {
 				if count == targetWeekOfMonth {
-					stop = true
-					// TODO
+					found = true
+					popUp(url)
+					return false
 				}
 				count++
 			}
+			return true
 		})
 	})
 
@@ -38,4 +39,18 @@ func BackNumber(targetYear int, targetMonth int, targetWeekOfMonth int) {
 	})
 
 	c.Visit("https://www.tvk-yokohama.com/top40/backnumber.html")
+}
+
+func popUp(url string) {
+	c := colly.NewCollector()
+
+	c.OnHTML("table tbody tr", func(e *colly.HTMLElement) {
+		fmt.Println("h3 found:", e.Text)
+	})
+
+	c.OnRequest(func(r *colly.Request) {
+		fmt.Println("PopUp", r.URL)
+	})
+
+	c.Visit(url)
 }

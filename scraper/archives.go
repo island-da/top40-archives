@@ -16,14 +16,14 @@ import (
 func Archives(targetYear int, targetMonth int, targetWeekOfMonth int) {
 	c := colly.NewCollector()
 
+	found := false
 	c.OnHTML("div.month", func(e *colly.HTMLElement) {
-		stop := false
-		count := 1
-		e.ForEach("a", func(_ int, a *colly.HTMLElement) {
-			if stop {
-				return
-			}
+		if found {
+			return
+		}
 
+		count := 1
+		e.ForEachWithBreak("a", func(_ int, a *colly.HTMLElement) bool {
 			onClickAttr := a.Attr("onclick")
 
 			if strings.Contains(onClickAttr, "loadDataFile") {
@@ -35,11 +35,11 @@ func Archives(targetYear int, targetMonth int, targetWeekOfMonth int) {
 				parsedDate := ParseDateArchives(apiURL)
 
 				if parsedYear == targetYear && parsedDate == targetMonth && count == targetWeekOfMonth {
-					stop = true
+					found = true
 					res, err := http.Get(apiURL)
 					if err != nil {
 						log.Fatalln("Failed to make API request:", err)
-						return
+						return false
 					}
 					defer res.Body.Close()
 					time.Sleep(1 * time.Second)
@@ -67,6 +67,7 @@ func Archives(targetYear int, targetMonth int, targetWeekOfMonth int) {
 				}
 			}
 			count++
+			return true
 		})
 	})
 
