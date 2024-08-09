@@ -1,21 +1,23 @@
 package scraper
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/gocolly/colly"
 )
 
-func BackNumber(targetYear int, targetMonth int, targetWeekOfMonth int) {
+func BackNumber(targetYear int, targetMonth int, targetWeekOfMonth int) error {
 	c := colly.NewCollector()
 
+	founded := false
 	c.OnHTML("div.row", func(e *colly.HTMLElement) {
 		var urls []string
 		e.ForEach("div.oa_list", func(_ int, d *colly.HTMLElement) {
 			dataHtmlAttr := d.Attr("data-html")
 			urls = append(urls, "https://www.tvk-yokohama.com/top40/"+dataHtmlAttr)
 		})
-		matchBackNumber(urls, targetYear, targetMonth, targetWeekOfMonth)
+		founded = founded || matchBackNumber(urls, targetYear, targetMonth, targetWeekOfMonth)
 	})
 
 	c.OnRequest(func(r *colly.Request) {
@@ -23,9 +25,15 @@ func BackNumber(targetYear int, targetMonth int, targetWeekOfMonth int) {
 	})
 
 	c.Visit("https://www.tvk-yokohama.com/top40/backnumber.html")
+
+	if !founded {
+		return errors.New("back number not found")
+	}
+	return nil
 }
 
-func matchBackNumber(urls []string, targetYear int, targetMonth int, targetWeekOfMonth int) {
+func matchBackNumber(urls []string, targetYear int, targetMonth int, targetWeekOfMonth int) bool {
+	founded := false
 	count := 1
 	for i := len(urls) - 1; i >= 0; i-- {
 		url := urls[i]
@@ -33,12 +41,14 @@ func matchBackNumber(urls []string, targetYear int, targetMonth int, targetWeekO
 		parsedDate := ParseDateBackNumber(url)
 		if parsedYear == targetYear && parsedDate == targetMonth {
 			if count == targetWeekOfMonth {
+				founded = true
 				popUp(url)
 				break
 			}
 			count++
 		}
 	}
+	return founded
 }
 
 func popUp(url string) {

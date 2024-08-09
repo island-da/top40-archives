@@ -10,6 +10,9 @@ func main() {
 	targetYear, targetMonth, targetWeekOfMonth := input.ParseYearMonthWeek()
 	fmt.Printf("targetYear: %d, targetMonth: %d, targetWeekOfMonth: %d\n", targetYear, targetMonth, targetWeekOfMonth)
 
-	scraper.BackNumber(targetYear, targetMonth, targetWeekOfMonth)
+	errorBackNumber := scraper.BackNumber(targetYear, targetMonth, targetWeekOfMonth)
+	if errorBackNumber != nil {
+		fmt.Println(errorBackNumber)
+	}
 	scraper.Archives(targetYear, targetMonth, targetWeekOfMonth)
 }
