@@ -10,14 +10,26 @@ func BackNumber(targetYear int, targetMonth int, targetWeekOfMonth int) {
 	c := colly.NewCollector()
 
 	c.OnHTML("div.row", func(e *colly.HTMLElement) {
+		stop := false
 		e.ForEach("div.oa_list", func(_ int, d *colly.HTMLElement) {
-			dataHtmlAttr := d.Attr("data-html")
+			if stop {
+				return
+			}
 
+			dataHtmlAttr := d.Attr("data-html")
 			apiURL := "https://www.tvk-yokohama.com/top40/" + dataHtmlAttr
 
 			parsedYear := ParseYear(apiURL)
 			parsedDate := ParseDateBackNumber(apiURL)
-			fmt.Println(parsedYear, parsedDate)
+
+			count := 1
+			if parsedYear == targetYear && parsedDate == targetMonth {
+				if count == targetWeekOfMonth {
+					stop = true
+					// TODO
+				}
+				count++
+			}
 		})
 	})
 
