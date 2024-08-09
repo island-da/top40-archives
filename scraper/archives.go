@@ -16,59 +16,18 @@ import (
 func Archives(targetYear int, targetMonth int, targetWeekOfMonth int) {
 	c := colly.NewCollector()
 
-	found := false
 	c.OnHTML("div.month", func(e *colly.HTMLElement) {
-		if found {
-			return
-		}
-
-		count := 1
-		e.ForEachWithBreak("a", func(_ int, a *colly.HTMLElement) bool {
+		var urls []string
+		e.ForEach("a", func(_ int, a *colly.HTMLElement) {
 			onClickAttr := a.Attr("onclick")
-
 			if strings.Contains(onClickAttr, "loadDataFile") {
 				start := strings.Index(onClickAttr, "'") + 1
 				end := strings.LastIndex(onClickAttr, "'")
-				apiURL := "https://www.tvk-yokohama.com/top40/2022/" + onClickAttr[start:end]
-
-				parsedYear := ParseYear(apiURL)
-				parsedDate := ParseDateArchives(apiURL)
-
-				if parsedYear == targetYear && parsedDate == targetMonth && count == targetWeekOfMonth {
-					found = true
-					res, err := http.Get(apiURL)
-					if err != nil {
-						log.Fatalln("Failed to make API request:", err)
-						return false
-					}
-					defer res.Body.Close()
-					time.Sleep(1 * time.Second)
-
-					reader := csv.NewReader(res.Body)
-					for {
-						record, err := reader.Read()
-						if err == io.EOF {
-							break
-						}
-						if err != nil {
-							log.Fatalf("Failed to read CSV: %v", err)
-						}
-
-						joinedRecord := strings.Join(record, ",")
-						fields := strings.Split(joinedRecord, ",")
-						if len(fields) >= 2 {
-							title := html.UnescapeString(fields[len(fields)-2])
-							artist := html.UnescapeString(fields[len(fields)-1])
-							fmt.Printf("%s / %s\n", artist, title)
-						} else {
-							log.Fatalln("Not enough fields")
-						}
-					}
-				}
+				url := "https://www.tvk-yokohama.com/top40/2022/" + onClickAttr[start:end]
+				urls = append(urls, url)
 			}
-			count++
-			return true
 		})
+		matchArchives(urls, targetYear, targetMonth, targetWeekOfMonth)
 	})
 
 	c.OnRequest(func(r *colly.Request) {
@@ -76,4 +35,45 @@ func Archives(targetYear int, targetMonth int, targetWeekOfMonth int) {
 	})
 
 	c.Visit("https://www.tvk-yokohama.com/top40/2022/archives.html")
+}
+
+func matchArchives(urls []string, targetYear int, targetMonth int, targetWeekOfMonth int) {
+	for count, url := range urls {
+		parsedYear := ParseYear(url)
+		parsedDate := ParseDateArchives(url)
+		if parsedYear == targetYear && parsedDate == targetMonth && count+1 == targetWeekOfMonth {
+			csvReader(url)
+			break
+		}
+	}
+}
+
+func csvReader(url string) {
+	res, err := http.Get(url)
+	if err != nil {
+		log.Fatalln("Failed to make API request:", err)
+	}
+	defer res.Body.Close()
+	time.Sleep(1 * time.Second)
+
+	reader := csv.NewReader(res.Body)
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("Failed to read CSV: %v", err)
+		}
+
+		joinedRecord := strings.Join(record, ",")
+		fields := strings.Split(joinedRecord, ",")
+		if len(fields) >= 2 {
+			title := html.UnescapeString(fields[len(fields)-2])
+			artist := html.UnescapeString(fields[len(fields)-1])
+			fmt.Printf("%s / %s\n", artist, title)
+		} else {
+			log.Fatalln("Not enough fields")
+		}
+	}
 }
