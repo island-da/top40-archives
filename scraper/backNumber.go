@@ -9,29 +9,26 @@ import (
 func BackNumber(targetYear int, targetMonth int, targetWeekOfMonth int) {
 	c := colly.NewCollector()
 
-	found := false
 	c.OnHTML("div.row", func(e *colly.HTMLElement) {
-		if found {
-			return
-		}
-		e.ForEachWithBreak("div.oa_list", func(_ int, d *colly.HTMLElement) bool {
-			dataHtmlAttr := d.Attr("data-html")
-			url := "https://www.tvk-yokohama.com/top40/" + dataHtmlAttr
 
+		var urls []string
+		e.ForEach("div.oa_list", func(_ int, d *colly.HTMLElement) {
+			dataHtmlAttr := d.Attr("data-html")
+			urls = append(urls, "https://www.tvk-yokohama.com/top40/"+dataHtmlAttr)
+		})
+
+		count := 1
+		for i := len(urls) - 1; i >= 0; i-- {
+			url := urls[i]
 			parsedYear := ParseYear(url)
 			parsedDate := ParseDateBackNumber(url)
-
-			count := 1
 			if parsedYear == targetYear && parsedDate == targetMonth {
 				if count == targetWeekOfMonth {
-					found = true
 					popUp(url)
-					return false
 				}
 				count++
 			}
-			return true
-		})
+		}
 	})
 
 	c.OnRequest(func(r *colly.Request) {
