@@ -25,6 +25,7 @@ func BackNumber(targetYear int, targetMonth int, targetWeekOfMonth int) {
 			if parsedYear == targetYear && parsedDate == targetMonth {
 				if count == targetWeekOfMonth {
 					popUp(url)
+					break
 				}
 				count++
 			}
