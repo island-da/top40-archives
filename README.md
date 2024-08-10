@@ -3,6 +3,10 @@
 tvkで放送されている `billboard Top40` の選曲リストを表示します。  
 
 ## コマンド
+buildして
+`./top40 --year=xxxx --month=xx --week=x`
+
+buildしないで
 `go run main.go --year=xxxx --month=xx --week=x`
 
 ### オプション
